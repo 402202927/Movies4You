@@ -108,30 +108,28 @@ form label {
   margin-top: 1rem;
 }
 
-.seat-map {
-  display: grid;
-  grid-template-columns: repeat(10, 1fr);
-  gap: 0.3rem;
-  margin: 1rem 0;
-}
-
-.seat-map div {
-  background-color: #ccc;
-  height: 30px;
+.seat {
+  display: inline-block;
+  background: #add8e6;
+  padding: 8px 12px;
+  margin: 4px;
   border-radius: 4px;
-  text-align: center;
-  line-height: 30px;
   cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
 }
 
-.seat-map .booked {
-  background-color: #888;
+.seat.booked {
+  background: #999;
   cursor: not-allowed;
+  pointer-events: none;
 }
 
-.seat-map .selected {
-  background-color: #e50914;
-  color: #fff;
+.seat.selected {
+  background: #5cb85c;
+  color: white;
+}
+
 }
 
 .review {

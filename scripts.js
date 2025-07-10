@@ -1,11 +1,13 @@
-// scripts.js
-
 // ----------------------------
-// Seat Map Generator (Fixed Layout)
+// Booked Seats - Replace this with PHP output in production
 // ----------------------------
+const bookedSeats = ["R1S3", "R2S5", "R4S8"]; // Example - to be replaced by PHP later
 const seatMapContainer = document.querySelector(".seat-map");
 const selectedSeats = new Set();
 
+// ----------------------------
+// Generate Seat Map with Visual States
+// ----------------------------
 function generateSeatMap(rows = 5, cols = 10) {
   seatMapContainer.innerHTML = "";
   for (let r = 1; r <= rows; r++) {
@@ -14,14 +16,19 @@ function generateSeatMap(rows = 5, cols = 10) {
       const seatId = `R${r}S${c}`;
       seat.textContent = seatId;
       seat.classList.add("seat");
-      seat.onclick = () => toggleSeat(seat, seatId);
+
+      if (bookedSeats.includes(seatId)) {
+        seat.classList.add("booked");
+      } else {
+        seat.onclick = () => toggleSeat(seat, seatId);
+      }
+
       seatMapContainer.appendChild(seat);
     }
   }
 }
 
 function toggleSeat(seat, seatId) {
-  if (seat.classList.contains("booked")) return;
   seat.classList.toggle("selected");
   if (selectedSeats.has(seatId)) {
     selectedSeats.delete(seatId);
@@ -31,6 +38,23 @@ function toggleSeat(seat, seatId) {
 }
 
 generateSeatMap();
+
+// ----------------------------
+// Booking Form Submission with Selected Seats
+// ----------------------------
+document.getElementById("bookingForm").addEventListener("submit", function (e) {
+  if (selectedSeats.size === 0) {
+    e.preventDefault();
+    alert("Please select at least one seat.");
+    return;
+  }
+
+  const seatsInput = document.createElement("input");
+  seatsInput.type = "hidden";
+  seatsInput.name = "selectedSeats";
+  seatsInput.value = Array.from(selectedSeats).join(",");
+  e.target.appendChild(seatsInput);
+});
 
 // ----------------------------
 // Find Cinemas Near User
@@ -45,7 +69,9 @@ function findCinemas() {
     { name: "Cinema C", city: "Johannesburg" }
   ];
 
-  const matches = cinemas.filter(c => c.city.toLowerCase().includes(locationInput.toLowerCase()));
+  const matches = cinemas.filter(c =>
+    c.city.toLowerCase().includes(locationInput.toLowerCase())
+  );
 
   cinemaList.innerHTML = matches.length ? "" : "<p>No cinemas found in your area.</p>";
   matches.forEach(c => {
@@ -66,55 +92,25 @@ function spinWheel() {
 }
 
 // ----------------------------
-// Booking Form Integration
-// ----------------------------
-document.getElementById("bookingForm").addEventListener("submit", async function(e) {
-  e.preventDefault();
-
-  const email = prompt("Enter your email to receive the ticket:");
-  const movie = document.getElementById("movieSelect").value;
-  const cinema = document.getElementById("cinemaSelect").value;
-  const time = document.getElementById("showtime").value;
-
-  if (!email || !movie || !cinema || !time || selectedSeats.size === 0) {
-    alert("Please fill in all fields and select at least one seat.");
-    return;
-  }
-
-  const response = await fetch("http://localhost:3000/api/book", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email,
-      movie,
-      cinema,
-      seats: Array.from(selectedSeats),
-      time
-    })
-  });
-
-  const result = await response.json();
-  if (result.success) {
-    alert("Booking successful! Check your email for the ticket.");
-    generateCalendarLinks(movie, time, cinema);
-  } else {
-    alert("Booking failed. Please try again.");
-  }
-});
-
-// ----------------------------
 // Calendar Integration (Google + Apple)
 // ----------------------------
 function generateCalendarLinks(title, time, location) {
   const start = new Date(time);
-  const end = new Date(start.getTime() + 2 * 60 * 60 * 1000); // Assume 2 hours
+  const end = new Date(start.getTime() + 2 * 60 * 60 * 1000); // 2 hours duration
 
   const pad = n => (n < 10 ? "0" + n : n);
-  const formatDate = d => `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}00Z`;
+  const formatDate = d =>
+    `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}T${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}00Z`;
 
-  const googleUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${formatDate(start)}/${formatDate(end)}&location=${encodeURIComponent(location)}&details=Your+movie+ticket+with+Movies4You`;
+  const googleUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
+    title
+  )}&dates=${formatDate(start)}/${formatDate(end)}&location=${encodeURIComponent(
+    location
+  )}&details=Your+movie+ticket+with+Movies4You`;
 
-  const icalUrl = `http://localhost:3000/api/calendar.ics?title=${encodeURIComponent(title)}&date=${encodeURIComponent(time)}&duration=120&location=${encodeURIComponent(location)}`;
+  const icalUrl = `http://localhost:3000/api/calendar.ics?title=${encodeURIComponent(
+    title
+  )}&date=${encodeURIComponent(time)}&duration=120&location=${encodeURIComponent(location)}`;
 
   const calendarLinks = document.createElement("div");
   calendarLinks.innerHTML = `
